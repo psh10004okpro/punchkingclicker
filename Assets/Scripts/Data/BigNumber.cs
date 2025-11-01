@@ -7,6 +7,8 @@ namespace PunchKing
     /// 큰 숫자를 처리하기 위한 유틸리티 클래스
     /// 가수(mantissa)와 지수(exponent)를 사용한 과학적 표기법 구현
     /// 예: 1.5e10 = 15,000,000,000
+    ///
+    /// 최대 표현 가능 숫자: 10^(9,223,372,036,854,775,807) - 사실상 무제한
     /// </summary>
     [System.Serializable]
     public class BigNumber
@@ -14,8 +16,8 @@ namespace PunchKing
         // 가수 (1.0 ~ 9.999...)
         private double mantissa;
 
-        // 지수 (10의 몇 승인지)
-        private int exponent;
+        // 지수 (10의 몇 승인지) - long으로 사실상 무제한
+        private long exponent;
 
         /// <summary>
         /// double 값으로부터 BigNumber 생성
@@ -38,7 +40,7 @@ namespace PunchKing
         /// <summary>
         /// 가수와 지수를 직접 지정하여 생성 (내부용)
         /// </summary>
-        private BigNumber(double mantissa, int exponent)
+        private BigNumber(double mantissa, long exponent)
         {
             this.mantissa = mantissa;
             this.exponent = exponent;
@@ -66,7 +68,7 @@ namespace PunchKing
                 return new BigNumber(0);
 
             double newMantissa = this.mantissa * other.mantissa;
-            int newExponent = this.exponent + other.exponent;
+            long newExponent = this.exponent + other.exponent;
             return new BigNumber(newMantissa, newExponent);
         }
 
@@ -78,7 +80,7 @@ namespace PunchKing
             if (this.IsZero()) return other;
             if (other.IsZero()) return this;
 
-            int expDiff = this.exponent - other.exponent;
+            long expDiff = this.exponent - other.exponent;
 
             // 지수 차이가 너무 크면 큰 쪽만 반환
             if (expDiff > 15) return this;
@@ -97,7 +99,7 @@ namespace PunchKing
             if (other.IsZero()) return this;
             if (this.IsZero()) return new BigNumber(-other.mantissa, other.exponent);
 
-            int expDiff = this.exponent - other.exponent;
+            long expDiff = this.exponent - other.exponent;
 
             if (expDiff > 15) return this;
             if (expDiff < -15) return new BigNumber(0);
@@ -195,7 +197,7 @@ namespace PunchKing
             string[] units = { "", "만", "억", "조", "경", "해", "자", "양", "구", "간", "정", "재", "극" };
 
             // 각 단위는 10^4 (만)씩 증가
-            int unitIndex = exponent / 4;
+            long unitIndex = exponent / 4;
 
             // 단위 배열을 벗어나면 과학적 표기법 사용
             if (unitIndex >= units.Length)
@@ -226,7 +228,7 @@ namespace PunchKing
                 return ToDouble().ToString("N0");
 
             string[] suffixes = { "", "K", "M", "B", "T", "aa", "ab", "ac", "ad", "ae", "af" };
-            int suffixIndex = exponent / 3;
+            long suffixIndex = exponent / 3;
 
             if (suffixIndex >= suffixes.Length)
                 return mantissa.ToString("F2") + "e" + exponent;
@@ -258,7 +260,7 @@ namespace PunchKing
                     return new BigNumber(0);
 
                 double m = double.Parse(parts[0]);
-                int e = int.Parse(parts[1]);
+                long e = long.Parse(parts[1]);
                 return new BigNumber(m, e);
             }
             catch
