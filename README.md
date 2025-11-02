@@ -1,6 +1,10 @@
-# 🥊 Punch King Clicker - Unity 6 모바일 클릭커 게임
+# 🥊 Punch King Clicker
 
-Unity 6으로 제작된 완전한 모바일 클릭커 게임 프로젝트입니다. iOS/Android 플랫폼을 지원하며, 최신 Unity 6 기능을 활용한 최적화가 적용되어 있습니다.
+완전한 기능을 갖춘 Unity 6 모바일 클릭커 게임
+
+[![Unity Version](https://img.shields.io/badge/Unity-6.0+-blue.svg)](https://unity.com/)
+[![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-green.svg)](#)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](#)
 
 ## 📱 게임 소개
 
