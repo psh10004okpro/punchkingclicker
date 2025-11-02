@@ -68,7 +68,7 @@ namespace PunchKing
                 get
                 {
                     if (AchievementManager.Instance == null || data == null) return false;
-                    return AchievementManager.Instance.IsAchievementCompleted(data.achievementType, tier);
+                    return AchievementManager.Instance.IsAchievementCompleted(data.achievementId);
                 }
             }
 
@@ -77,8 +77,8 @@ namespace PunchKing
                 get
                 {
                     if (AchievementManager.Instance == null || data == null) return 0f;
-                    long current = AchievementManager.Instance.GetProgress(data.achievementType);
-                    long target = data.GetTargetValue(tier);
+                    long current = AchievementManager.Instance.GetProgress(data.type);
+                    long target = data.targetValue;
                     return target > 0 ? Mathf.Clamp01((float)current / target) : 0f;
                 }
             }
@@ -146,11 +146,7 @@ namespace PunchKing
 
             foreach (var data in achievementDatas)
             {
-                // 각 티어별로 아이템 생성
-                for (int tier = 0; tier < data.tiers.Count; tier++)
-                {
-                    CreateAchievementItem(data, tier);
-                }
+                CreateAchievementItem(data);
             }
 
             // 초기 정렬 및 필터 적용
@@ -160,14 +156,14 @@ namespace PunchKing
         /// <summary>
         /// 업적 아이템 생성
         /// </summary>
-        void CreateAchievementItem(AchievementData data, int tier)
+        void CreateAchievementItem(AchievementData data)
         {
             GameObject itemObj = Instantiate(achievementItemPrefab, achievementContainer);
             AchievementItem item = new AchievementItem
             {
                 gameObject = itemObj,
                 data = data,
-                tier = tier
+                tier = data.tier
             };
 
             // UI 컴포넌트 참조
@@ -180,15 +176,15 @@ namespace PunchKing
 
             // 텍스트 설정
             if (item.nameText != null)
-                item.nameText.text = $"{data.achievementName} {tier + 1}";
+                item.nameText.text = data.achievementName;
 
             if (item.descriptionText != null)
                 item.descriptionText.text = data.description;
 
-            // 보상 클레임 버튼
+            // 보상 클레임 버튼 (업적은 완료 시 즉시 보상이 지급되므로 클레임 버튼 숨김)
             if (item.claimButton != null)
             {
-                item.claimButton.onClick.AddListener(() => OnClaimReward(item));
+                item.claimButton.gameObject.SetActive(false);
             }
 
             achievementItems.Add(item);
@@ -232,13 +228,6 @@ namespace PunchKing
                 item.completedIcon.gameObject.SetActive(isCompleted);
             }
 
-            // 클레임 버튼
-            if (item.claimButton != null)
-            {
-                bool canClaim = isCompleted && !AchievementManager.Instance.IsRewardClaimed(item.data.achievementType, item.tier);
-                item.claimButton.gameObject.SetActive(canClaim);
-            }
-
             // 완료된 업적은 회색으로
             if (isCompleted)
             {
@@ -256,46 +245,6 @@ namespace PunchKing
             {
                 UpdateAchievementItem(item);
             }
-        }
-
-        /// <summary>
-        /// 보상 수령
-        /// </summary>
-        void OnClaimReward(AchievementItem item)
-        {
-            if (AchievementManager.Instance == null || item == null) return;
-
-            // 보상 지급 (AchievementManager에서 처리)
-            var tierData = item.data.tiers[item.tier];
-
-            // 보상 알림
-            string rewardText = "";
-            if (tierData.goldReward > 0)
-            {
-                GameManager.Instance?.AddGold(new BigNumber(tierData.goldReward));
-                rewardText += $"💰 {new BigNumber(tierData.goldReward).ToKoreanString()} 골드\n";
-            }
-
-            if (tierData.prestigeReward > 0 && PrestigeManager.Instance != null)
-            {
-                PrestigeManager.Instance.prestigeCurrency =
-                    PrestigeManager.Instance.prestigeCurrency.Add(new BigNumber(tierData.prestigeReward));
-                rewardText += $"⭐ {tierData.prestigeReward} 프레스티지 화폐\n";
-            }
-
-            // 보상 수령 표시
-            AchievementManager.Instance.MarkRewardClaimed(item.data.achievementType, item.tier);
-
-            // UI 알림
-            UIManager.Instance?.ShowBuffNotification(
-                "🏆 업적 보상!",
-                $"{item.data.achievementName} {item.tier + 1}\n{rewardText}",
-                3f
-            );
-
-            // UI 갱신
-            UpdateAchievementItem(item);
-            UpdateStatistics();
         }
 
         /// <summary>
@@ -343,7 +292,7 @@ namespace PunchKing
                     filteredItems = filteredItems.OrderByDescending(i => i.Progress).ToList();
                     break;
                 case SortType.Type:
-                    filteredItems = filteredItems.OrderBy(i => i.data.achievementType).ThenBy(i => i.tier).ToList();
+                    filteredItems = filteredItems.OrderBy(i => i.data.type).ThenBy(i => i.tier).ToList();
                     break;
                 case SortType.Completion:
                     filteredItems = filteredItems.OrderByDescending(i => i.IsCompleted).ThenByDescending(i => i.Progress).ToList();

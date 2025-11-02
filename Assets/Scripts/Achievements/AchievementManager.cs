@@ -357,6 +357,77 @@ namespace PunchKing
             return (float)completedAchievements.Count / allAchievements.Count * 100f;
         }
 
+        /// <summary>
+        /// 해당 타입의 현재 진행도 가져오기
+        /// </summary>
+        public long GetProgress(AchievementData.AchievementType type)
+        {
+            switch (type)
+            {
+                case AchievementData.AchievementType.TotalClicks:
+                    return totalClicks;
+                case AchievementData.AchievementType.TotalGold:
+                    return totalGoldEarned;
+                case AchievementData.AchievementType.ReachStage:
+                    return highestStage;
+                case AchievementData.AchievementType.DefeatBosses:
+                    return bossesDefeated;
+                case AchievementData.AchievementType.PrestigeCount:
+                    return PrestigeManager.Instance != null ? PrestigeManager.Instance.prestigeCount : 0;
+                case AchievementData.AchievementType.UseSkills:
+                    return skillsUsed;
+                case AchievementData.AchievementType.CriticalHits:
+                    return criticalHits;
+                case AchievementData.AchievementType.CompleteQuests:
+                    return questsCompleted;
+                case AchievementData.AchievementType.PlayTime:
+                    return playTimeSeconds;
+                case AchievementData.AchievementType.UpgradeLevel:
+                    return UpgradeManager.Instance != null ? GetTotalUpgradeLevels() : 0;
+                case AchievementData.AchievementType.UnlockCoaches:
+                    return CoachSystem.Instance != null ? CoachSystem.Instance.allCoaches.Count(c => c.isUnlocked) : 0;
+                case AchievementData.AchievementType.DailyLogins:
+                    return DailyRewardSystem.Instance != null ? DailyRewardSystem.Instance.currentStreak : 0;
+                default:
+                    return 0;
+            }
+        }
+
+        /// <summary>
+        /// 총 업그레이드 레벨 계산
+        /// </summary>
+        long GetTotalUpgradeLevels()
+        {
+            if (UpgradeManager.Instance == null) return 0;
+            long total = 0;
+            foreach (var kvp in UpgradeManager.Instance.upgradeLevels)
+            {
+                total += kvp.Value;
+            }
+            return total;
+        }
+
+        /// <summary>
+        /// 업적 ID로 완료 여부 확인
+        /// </summary>
+        public bool IsAchievementCompleted(string achievementId)
+        {
+            return completedAchievements.Contains(achievementId);
+        }
+
+        /// <summary>
+        /// 타입별 업적 목록 가져오기
+        /// </summary>
+        public List<AchievementData> GetAchievementsByType(AchievementData.AchievementType type)
+        {
+            return allAchievements.Where(a => a.type == type).OrderBy(a => a.tier).ToList();
+        }
+
+        /// <summary>
+        /// 모든 업적 목록 (AchievementPanel용 호환성 프로퍼티)
+        /// </summary>
+        public List<AchievementData> achievements => allAchievements;
+
 #if UNITY_EDITOR
         [ContextMenu("Unlock All Achievements")]
         void EditorUnlockAll()
